@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/user"
 	"path"
+	"strings"
 
 	"github.com/rzane/docker2exe/cmd"
 	"github.com/urfave/cli/v2"
@@ -55,6 +56,10 @@ func main() {
 				Usage:   "platforms and architectures to target",
 			},
 			&cli.StringFlag{
+				Name:  "ports",
+				Usage: "ports to use",
+			},
+			&cli.StringFlag{
 				Name:  "module",
 				Usage: "name of generated golang module",
 			},
@@ -77,6 +82,7 @@ func generate(c *cli.Context) error {
 		Embed:   c.Bool("embed"),
 		Workdir: c.String("workdir"),
 		Env:     c.StringSlice("env"),
+		Ports:   c.String("ports"),
 		Volumes: c.StringSlice("volume"),
 	}
 
@@ -87,7 +93,9 @@ func generate(c *cli.Context) error {
 
 	if generator.Module == "" {
 		user, _ := user.Current()
-		generator.Module = fmt.Sprintf("github.com/%s/%s", user.Username, generator.Name)
+		sanitizedUsername := strings.ReplaceAll(user.Username, "\\", "-")
+		sanitizedUsername = strings.ReplaceAll(sanitizedUsername, "/", "-")
+		generator.Module = fmt.Sprintf("github.com/%s/%s", sanitizedUsername, generator.Name)
 	}
 
 	if len(generator.Targets) == 0 {

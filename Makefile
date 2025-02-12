@@ -7,6 +7,17 @@ TARGETS = darwin/amd64 darwin/arm64 linux/amd64 windows/amd64
 OS = $(shell go env GOOS)
 ARCH = $(shell go env GOARCH)
 
+# Detect Windows
+ifeq ($(OS),Windows_NT)
+    # PowerShell command wrapper
+    SET_ENV = powershell -Command "$$env:GOOS='$(1)'; $$env:GOARCH='$(2)'; 
+    MKDIR = powershell -Command "New-Item -ItemType Directory -Force -Path"
+else
+    # Unix command wrapper
+    SET_ENV = GOOS=$(1) GOARCH=$(2)
+    MKDIR = mkdir -p
+endif
+
 os = $(word 1, $(subst /, ,$@))
 arch = $(word 2, $(subst /, ,$@))
 
@@ -29,7 +40,7 @@ release: clean all
 	gh release create $(VERSION) dist/docker2exe-* --generate-notes
 
 $(OUTPUT):
-	mkdir $(OUTPUT)
+	$(MKDIR) $(OUTPUT)
 
 $(TARGETS): $(SOURCES) $(OUTPUT)
-	GOOS=$(os) GOARCH=$(arch) go build -o "$(OUTPUT)/$(NAME)-$(os)-$(arch)"
+	$(call SET_ENV,$(os),$(arch)) go build -o "$(OUTPUT)/$(NAME)-$(os)-$(arch)"
