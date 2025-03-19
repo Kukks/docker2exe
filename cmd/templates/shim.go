@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"syscall"
 
 	"github.com/mattn/go-isatty"
 )
@@ -15,6 +14,7 @@ type Shim struct {
 	Workdir string
 	Env     []string
 	Volumes []string
+	Ports   string
 	Stdout  io.Writer
 	Stderr  io.Writer
 }
@@ -67,9 +67,15 @@ func (shim *Shim) Exec(containerArgs []string) error {
 		return err
 	}
 
-	args = append([]string{cmd.Path}, args...)
 	args = append(args, containerArgs...)
-	return syscall.Exec(cmd.Path, args, os.Environ())
+	
+	// Windows-compatible execution
+	cmd = exec.Command(cmd.Path, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+	
+	return cmd.Run()
 }
 
 func (shim *Shim) docker(arg ...string) *exec.Cmd {
@@ -97,6 +103,10 @@ func (shim *Shim) assembleRunArgs() ([]string, error) {
 
 	for _, volume := range shim.Volumes {
 		args = append(args, "-v", volume)
+	}
+
+	if shim.Ports != "" {
+		args = append(args, "-p", shim.Ports)
 	}
 
 	if shim.Workdir != "" {
