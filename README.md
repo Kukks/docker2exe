@@ -10,6 +10,14 @@ Download a binary from the [releases page](https://github.com/rzane/docker2exe/r
     $ chmod +x docker2exe
     $ ./docker2exe --help
 
+### Requirements on the building device
+
+Docker, GoLang and gzip are also required. Use your package manager to install them.
+
+### Requirements on the executing device
+
+Docker is required.
+
 ## Usage
 
 To create a new binary:
